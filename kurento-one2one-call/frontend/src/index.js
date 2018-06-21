@@ -1,9 +1,10 @@
     import React from 'react';
     import ReactDOM from 'react-dom';
+    import { BrowserRouter, Route } from 'react-router-dom';
     //import { Grid, Row, Alert, Col, Tab, Tabs } from 'react-bootstrap';
     //import Component from '../conditionalcomponents/Component'
-    import { Head } from "./components/Head";
-    import { Home } from "./components/Home";
+    import { Head } from "./conditionalComponent/Head";
+    import { Home } from "./conditionalComponent/Home";
     class App extends React.Component {
 
         render(){
@@ -15,9 +16,9 @@
                     </div>
                       <hr/>
                   </div>
-                  <div className="col-xs-10">
-                    <Home name={"Ak"}/>
-                  </div>
+                  <BrowserRouter>
+                    <Route exact path="/webinar/:webinarId/:profileId" component={Home} />
+                  </BrowserRouter>
               </div>
             );
         }
