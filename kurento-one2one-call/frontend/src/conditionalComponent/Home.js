@@ -1,6 +1,7 @@
 import React from "react";
 import io from 'socket.io-client';
 import kurentoUtils from 'kurento-utils';
+
 //import { Chat } from "./Chat";
 
 const socketUrl = 'http://localhost:8443';
@@ -29,11 +30,14 @@ export class Home extends React.Component {
             message: [],
         }
     };
+        this.Call = this.Call.bind(this);
+        this.stop = this.stop.bind(this);
+    };
 
 
     sendMessage = (message) => {
         var jsonMessage = JSON.stringify(message);
-        console.log('Senging message: ' + jsonMessage);
+        console.log('Senging message: ' , message);
         socket.emit('message',jsonMessage);
     }
 
@@ -62,22 +66,35 @@ export class Home extends React.Component {
     };
 
     componentDidMount() {
-        console.log(this.state);
+
+        this.webinarId = this.props.match.params.webinarId // roomID
+        this.userId = this.props.match.params.profileId   // userID
+        console.log("test params ::", this.webinarId, this.userId);
+
         this.setState({
             videoInput: document.getElementById('videoInput'),
             videoOutput: document.getElementById('videoOutput'),
         });
-
+        let roomParams = {webinarId: this.webinarId, userId: this.userId} 
         socket.on('connect', ()=>{
             console.log('connected');
+            socket.emit("joinRoom",roomParams )
         });
+       
+       
+        socket.on("roomJoined", (data)=>{
+            console.log("roomJoined :: ",data);
+        })
 
 
         socket.on('message', (data) => {
             var parsedMessage = JSON.parse(data);
-            console.info('Received message: ' + data);
+            console.info('Received message: ' , data);
 
                 switch (parsedMessage.id) {
+                        case 'startCall':
+                            console.log("startCall ", parsedMessage);
+                            break;
                         case 'registerResponse':
                             this.resgisterResponse(parsedMessage);
                             break;
@@ -123,9 +140,21 @@ export class Home extends React.Component {
         var options = {
             localVideo : this.state.videoInput,
             remoteVideo : this.state.videoOutput,
+            mediaConstraints: {
+                audio: true,
+                video: {
+                    width: {
+                        min: "640",
+                        max: "1223"
+                    },
+                    height: {
+                        min: "480",
+                        max: "720"
+                    }
+                }
+            },
             onicecandidate : this.onIceCandidate.bind(this)
         }
-
         var tis = this;
 
         webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(
@@ -204,7 +233,7 @@ export class Home extends React.Component {
 
     incomingCall(message) {
         // If bussy just reject without disturbing user
-        console.log('inComing call()');
+        console.log('inComing call()', this.state.callState);
         //console.log(callState);
 
         if (this.state.callState != NO_CALL) {
@@ -215,18 +244,31 @@ export class Home extends React.Component {
                 message : 'bussy'
 
             };
-            console.log(1111111114444);
-            return this.sendMessage(response+"resp.");
+            console.log(1111111114444, response);
+            return this.sendMessage(response , "resp.");
         }
 
         this.setState({callState: PROCESSING_CALL });
-        if (window.confirm('User ' + message.from
-            + ' is calling you. Do you accept the call?')) {
+        if (window.confirm('User ' , message.from
+            , ' is calling you. Do you accept the call?')) {
             //showSpinner(videoInput, videoOutput);
 
             var options = {
                 localVideo : this.state.videoInput,
                 remoteVideo : this.state.videoOutput,
+                mediaConstraints: {
+                    audio: true,
+                    video: {
+                        width: {
+                            min: "640",
+                            max: "1223"
+                        },
+                        height: {
+                            min: "480",
+                            max: "720"
+                        }
+                    }
+                },
                 onicecandidate : this.onIceCandidate.bind(this)
             }
 
@@ -249,7 +291,7 @@ export class Home extends React.Component {
                             callResponse : 'accept',
                             sdpOffer : offerSdp
                         };
-
+                        console.log("sending sdpOffer ::", response)
                         tis.sendMessage(response);
                     });
                 });
@@ -270,13 +312,13 @@ export class Home extends React.Component {
 
     startCommunication(message) {
         this.setState({callState: IN_CALL});
-        //console.log(callState+"startcomm");
+        console.log("startCommunication :: ",message.sdpAnswer );
         webRtcPeer.processAnswer(message.sdpAnswer);
     }
 
     onIceCandidate(candidate) {
         console.log(candidate);
-        console.log('Local candidate' + JSON.stringify(candidate));
+        console.log('Local candidate' , JSON.stringify(candidate));
 
         var message = {
             id : 'onIceCandidate',
@@ -340,6 +382,7 @@ export class Home extends React.Component {
                         </div>
                     </div>
                 </div>
+
             </div>
         );
     }

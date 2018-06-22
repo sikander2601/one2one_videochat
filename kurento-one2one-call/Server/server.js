@@ -5,7 +5,7 @@ var minimist = require('minimist');
 var url = require('url');
 var kurento = require('kurento-client');
 var fs    = require('fs');
-var https = require('http');
+var http = require('http');
 var socketio = require('socket.io');
 
 
@@ -43,11 +43,11 @@ function nextUniqueId() {
 
 var asUrl = url.parse(argv.as_uri);
 var port = asUrl.port;
-var server = https.createServer(options, app);
+var server = http.createServer(app);
 var io = socketio(server);
 
 server.listen(port, function() {
-    console.log('Open ' + url.format(asUrl) + ' with a WebRTC capable browser');
+    console.log('Open ' + url.format(asUrl) + ' with a WebRTC capable browser',port);
 });
 
 /*
@@ -92,9 +92,9 @@ UserRegistry.prototype.getByName = function(name) {
     return this.usersByName[name];
 }
 
-UserRegistry.prototype.removeById = function(id) {
-    var userSession = this.usersById[id];
-    if (!userSession) return;
+UserRegistry.prototype.removnameeById = function(id) {
+    var userSession = this.unamesersById[id];
+    if (!userSession) returnname;
     delete this.usersById[id];
     delete this.usersByName[userSession.name];
 }
@@ -224,6 +224,20 @@ io.on('connection', function(socket) {
         stop(sessionId);
     });
 
+    socket.on("joinRoom", function(roomParams){
+        let room  = roomParams.webinarId;
+        room = 123;
+        socket.join(roomParams.webinarId);
+        var roomLength = io.sockets.adapter.rooms[room].length;
+        io.to(room).emit("roomJoined", "user joined the room "+ room + " length:"+ roomLength );
+        if(roomLength ===2){
+            socket.emit('message', JSON.stringify({
+                id:"startCall",
+                numberOfMember : roomLength
+            }) )
+        }
+    })
+
     socket.on('close', function () {
         console.log('Connection ' + sessionId + ' closed');
         stop(sessionId);
@@ -238,7 +252,7 @@ io.on('connection', function(socket) {
     socket.on('message', function (_message) {
         console.log("here")
         var message = JSON.parse(_message);
-        console.log('Connection ' + sessionId + ' received message ', message);
+        console.log('Connection ' , sessionId , ' received message ', message);
 
         switch (message.id) {
             case 'register':
@@ -318,10 +332,11 @@ function stop(sessionId) {
 }
 
 function incomingCallResponse(calleeId, from, callResponse, calleeSdp, socket) {
-    console.log(calleeSdp);
+    console.log("incoming call :: ", calleeId, from, callResponse, calleeSdp);
     clearCandidatesQueue(calleeId);
 
     function onError(callerReason, calleeReason) {
+        console.log("onError :: " , callerReason, calleeReason);
         if (pipeline) pipeline.release();
         if (caller) {
             var callerMessage = {
@@ -367,7 +382,8 @@ function incomingCallResponse(calleeId, from, callResponse, calleeSdp, socket) {
 
                     var message = {
                         id: 'startCommunication',
-                        sdpAnswer: calleeSdpAnswer
+                        sdpAnswer: calleeSdpAnswer,
+                        callee : "callee"
                     };
                     callee.sendMessage(message);
 

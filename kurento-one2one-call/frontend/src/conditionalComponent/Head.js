@@ -9,7 +9,7 @@
                       </div>
                       <ul className=" nav navbar-nav ">
                           <li>
-                              <a style={{color: 'white'}} href="#"> Home </a>
+                              <a style={{color: 'white'}} href="/webinar"> Home </a>
                           </li>
                       </ul>
                   </div>
