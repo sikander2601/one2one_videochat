@@ -4,6 +4,8 @@
     //import Component from '../conditionalcomponents/Component'
     import { Head } from "./components/Head";
     import { Home } from "./components/Home";
+    //import { Chat } from "./components/Chat";
+
     class App extends React.Component {
 
         render(){
@@ -16,7 +18,7 @@
                       <hr/>
                   </div>
                   <div className="col-xs-10">
-                    <Home name={"Ak"}/>
+                    <Home/>
                   </div>
               </div>
             );

@@ -1,8 +1,11 @@
 import React from "react";
 import io from 'socket.io-client';
 import kurentoUtils from 'kurento-utils';
-const socketUrl = 'https://localhost:8443';
+//import { Chat } from "./Chat";
+
+const socketUrl = 'http://localhost:8443';
 const socket = io(socketUrl);
+
 var webRtcPeer;
 
 const NOT_REGISTERED = 0;
@@ -13,6 +16,7 @@ const NO_CALL = 0;
 const PROCESSING_CALL = 1;
 const IN_CALL = 2;
 
+
 export class Home extends React.Component {
     constructor(props) {
         super(props);
@@ -22,7 +26,8 @@ export class Home extends React.Component {
             videoOutput: null,
             registerState: NOT_REGISTERED,
             callState: NO_CALL,
-        };
+            message: [],
+        }
     };
 
 
@@ -57,6 +62,7 @@ export class Home extends React.Component {
     };
 
     componentDidMount() {
+        console.log(this.state);
         this.setState({
             videoInput: document.getElementById('videoInput'),
             videoOutput: document.getElementById('videoOutput'),
@@ -66,9 +72,7 @@ export class Home extends React.Component {
             console.log('connected');
         });
 
-        socket.on('create',(data)=> {
-            console.log(data);
-        })
+
         socket.on('message', (data) => {
             var parsedMessage = JSON.parse(data);
             console.info('Received message: ' + data);
@@ -96,10 +100,14 @@ export class Home extends React.Component {
                               webRtcPeer.addIceCandidate(parsedMessage);
                               break;
                     default:
-                        console.error('Unrecognized message', parsedMessage);
+                        console.error('Unrecognized message', parsedMessage.message);
             }
         });
         console.log(socket);
+        socket.on('chat',(data)=> {
+            console.log(data);
+        this.recieveChat(data);
+        })
     };
 
     Call = () =>{
@@ -167,7 +175,10 @@ export class Home extends React.Component {
     resgisterResponse(message) {
         if (message.response === 'accepted') {
             console.log("User Registered "+message.response);
-            this.setState({registerState: REGISTERED});
+            var name = document.getElementById('name');
+            this.setState({
+                username: name,
+                registerState: REGISTERED});
         } else {
             this.setState({registerState: NOT_REGISTERED});
             var errorMessage = message.message ? message.message
@@ -188,6 +199,7 @@ export class Home extends React.Component {
             this.setState({callState: IN_CALL});
             webRtcPeer.processAnswer(message.sdpAnswer);
         }
+        console.log(this.state);
     }
 
     incomingCall(message) {
@@ -253,6 +265,7 @@ export class Home extends React.Component {
             this.sendMessage(response);
             this.stop(true);
         }
+        console.log(this.state);
     }
 
     startCommunication(message) {
@@ -273,6 +286,18 @@ export class Home extends React.Component {
         this.sendMessage(message);
     }
 
+    sendChat(){
+        var msg= document.getElementById('message').value;
+        console.log(this.state.message);
+        socket.emit('chat', msg );
+    }
+
+    recieveChat(msg){
+        var prevState= this.state;
+        this.setState(prevState => ({
+            message: [...prevState.message, msg]
+        }));    }
+
     render(){
         return(
             <div>
@@ -283,6 +308,38 @@ export class Home extends React.Component {
                 {<button onClick={this.Call.bind(this)} className='btn btn-danger'>Call</button>}
                 {<button onClick={this.stop.bind(this)} className='btn btn-danger'> Stop</button>}
                 <hr/>
+                <div className="container">
+                    <div className="row">
+                        <div className="col-4">
+                            <div className="card">
+                                <div className="card-body">
+                                    <div className="card-title">Global Chat</div>
+                                    <hr/>
+                                    <div className="messages" id>
+                                       {this.state.message.map(msg => {
+                                           console.log(msg)
+                                            return (
+                                            <div>  { msg } </div>
+                                        )
+                                    })}
+                                    </div>
+                                </div>
+                                <div className="card-footer">
+                                    <br/>
+                                    <input type="text" id='message' placeholder="Message" className="form-control"/>
+                                    <br/>
+                                    <button className="btn btn-primary form-control" onClick={this.sendChat.bind(this)}>Send</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-7" style={{ float: "right" }}>
+                            <div id="video">
+                                <video id="videoOutput" autoPlay width="640px" height="480px" poster="./download (1).png"></video>
+                                <video id="videoInput" autoPlay width="240px" height="180px" poster="./download (1).png" ></video>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

@@ -5,14 +5,14 @@ var minimist = require('minimist');
 var url = require('url');
 var kurento = require('kurento-client');
 var fs    = require('fs');
-var https = require('https');
+var https = require('http');
 var socketio = require('socket.io');
 
 
 
 var argv = minimist(process.argv.slice(2), {
   default: {
-      as_uri: "https://localhost:8443",
+      as_uri: "http://localhost:8443",
       ws_uri: "http://128.199.175.103:8888/kurento"
   }
 });
@@ -230,6 +230,11 @@ io.on('connection', function(socket) {
         userRegistry.unregister(sessionId);
     });
 
+    socket.on('chat', function(data){
+        console.log('chat');
+        io.emit('chat', data);
+    })
+
     socket.on('message', function (_message) {
         console.log("here")
         var message = JSON.parse(_message);
@@ -263,6 +268,7 @@ io.on('connection', function(socket) {
                     id: 'error',
                     message: 'Invalid message ' + message
                 }));
+                console.log(message);
                 break;
         }
 
