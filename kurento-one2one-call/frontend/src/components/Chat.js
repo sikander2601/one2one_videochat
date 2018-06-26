@@ -26,7 +26,7 @@ export class Chat extends React.Component {
                                 <br/>
                                 <input type="text" placeholder="Message" className="form-control"/>
                                 <br/>
-                                <button className="btn btn-primary form-control" }>Send</button>
+                                <button className="btn btn-primary form-control">Send</button>
                             </div>
                         </div>
                     </div>

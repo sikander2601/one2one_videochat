@@ -7,11 +7,11 @@ import kurentoUtils from 'kurento-utils';
 const socketUrl = 'http://localhost:8443';
 const socket = io(socketUrl);
 
-var webRtcPeer;
+let webRtcPeer;
 
-const NOT_REGISTERED = 0;
-const REGISTERING = 1;
-const REGISTERED = 2;
+//const NOT_REGISTERED = 0;
+//const REGISTERING = 1;
+//const REGISTERED = 2;
 
 const NO_CALL = 0;
 const PROCESSING_CALL = 1;
@@ -22,26 +22,29 @@ export class Home extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            username: null,
+            //username: null,
             videoInput: null,
             videoOutput: null,
-            registerState: NOT_REGISTERED,
+            //registerState: NOT_REGISTERED,
             callState: NO_CALL,
             message: [],
         }
-    };
-        this.Call = this.Call.bind(this);
-        this.stop = this.stop.bind(this);
+
+        //this.Call = this.Call.bind(this);
+        //this.stop = this.stop.bind(this);
     };
 
 
     sendMessage = (message) => {
+        if(message.id == 'onIceCandidate'){
+            console.log('Dobara')
+        }
         var jsonMessage = JSON.stringify(message);
         console.log('Senging message: ' , message);
         socket.emit('message',jsonMessage);
     }
 
-
+    /*
     Register = () => {
 
         console.log(socket);
@@ -63,7 +66,7 @@ export class Home extends React.Component {
         };
         this.setState({registerState: REGISTERING});
         this.sendMessage(message);
-    };
+    };*/
 
     componentDidMount() {
 
@@ -75,7 +78,9 @@ export class Home extends React.Component {
             videoInput: document.getElementById('videoInput'),
             videoOutput: document.getElementById('videoOutput'),
         });
-        let roomParams = {webinarId: this.webinarId, userId: this.userId} 
+
+        let roomParams = {webinarId: this.webinarId, userId: this.userId}
+
         socket.on('connect', ()=>{
             console.log('connected');
             socket.emit("joinRoom",roomParams )
@@ -84,59 +89,69 @@ export class Home extends React.Component {
        
         socket.on("roomJoined", (data)=>{
             console.log("roomJoined :: ",data);
+            if(data.roomLength === 2 ){
+                console.log("startCall ");
+                this.Call();
+            }
         })
 
+        socket.on('chat',(data)=> {
+            console.log(data);
+            this.recieveChat(data);
+        });
 
+        var tis = this;
         socket.on('message', (data) => {
             var parsedMessage = JSON.parse(data);
             console.info('Received message: ' , data);
 
-                switch (parsedMessage.id) {
-                        case 'startCall':
-                            console.log("startCall ", parsedMessage);
-                            break;
-                        case 'registerResponse':
-                            this.resgisterResponse(parsedMessage);
-                            break;
-                         case 'callResponse':
-                             this.callResponse(parsedMessage);
-                              break;
-                          case 'incomingCall':
-                              this.incomingCall(parsedMessage);
-                              break;
-                          case 'startCommunication':
-                              console.log("starting  to communicate");
-                              this.startCommunication(parsedMessage);
-                              break;
-                          case 'stopCommunication':
-                              console.info("Communication ended by remote peer");
-                              this.stop(true);
-                              break;
-                          case 'iceCandidate':
-                              console.log(parsedMessage);
-                              webRtcPeer.addIceCandidate(parsedMessage);
-                              break;
-                    default:
-                        console.error('Unrecognized message', parsedMessage.message);
-            }
+
+            switch (parsedMessage.id) {
+                //case 'startCall':
+                //      console.log("startCall ", parsedMessage);
+                //      this.Call();
+                //      break;
+                //case 'registerResponse':
+                //     this.resgisterResponse(parsedMessage);
+                //     break;
+                case 'callResponse':
+                     this.callResponse(parsedMessage);
+                      break;
+                case 'incomingCall':
+                      console.log('Call is coming.')
+                      this.incomingCall(parsedMessage);
+                      break;
+                case 'startCommunication':
+                      console.log("starting  to communicate");
+                      this.startCommunication(parsedMessage);
+                      break;
+                case 'stopCommunication':
+                      console.info("Communication ended by remote peer");
+                      this.stop(true);
+                      break;
+                case 'iceCandidate':
+                      console.log('iceCandidate :: ' + parsedMessage);
+                      webRtcPeer.addIceCandidate(parsedMessage.candidate);
+                      break;
+            default:
+            console.error('Unrecognized message', parsedMessage.message);
+        }
         });
         console.log(socket);
-        socket.on('chat',(data)=> {
-            console.log(data);
-        this.recieveChat(data);
-        })
     };
 
     Call = () =>{
-        console.log('In call()');
-        if (document.getElementById('peer').value === '') {
+        console.log("Call()");
+
+        /*if (document.getElementById('peer').value === '') {
             window.alert("You must specify the peer name");
             return;
-        }
+        }*/
 
         this.setState({callState: PROCESSING_CALL});
         //console.log("stateofcall"+" "+callState);
         //showSpinner(videoInput, videoOutput);
+
         var options = {
             localVideo : this.state.videoInput,
             remoteVideo : this.state.videoOutput,
@@ -145,7 +160,7 @@ export class Home extends React.Component {
                 video: {
                     width: {
                         min: "640",
-                        max: "1223"
+                        max: "1240"
                     },
                     height: {
                         min: "480",
@@ -169,10 +184,12 @@ export class Home extends React.Component {
                     console.error(error);
                     tis.setState({callState: NO_CALL});
                 }
+                console.log('Line :: 182')
                 var message = {
                     id : 'call',
-                    from : document.getElementById('name').value,
-                    to : document.getElementById('peer').value,
+                    roomId: tis.webinarId,
+                    //from : document.getElementById('name').value,
+                    //to : document.getElementById('peer').value,
                     sdpOffer : offerSdp
                 };
                 console.log(message);
@@ -201,7 +218,7 @@ export class Home extends React.Component {
        this.socket.close();
     }
 
-    resgisterResponse(message) {
+    /*resgisterResponse(message) {
         if (message.response === 'accepted') {
             console.log("User Registered "+message.response);
             var name = document.getElementById('name');
@@ -215,7 +232,7 @@ export class Home extends React.Component {
             console.log(errorMessage);
             alert('Error registering user. See console for further information.');
         }
-    }
+    }*/
 
     callResponse(message) {
         if (message.response !== 'accepted') {
@@ -225,16 +242,16 @@ export class Home extends React.Component {
             console.log(errorMessage);
             this.stop(true);
         } else {
-            this.setState({callState: IN_CALL});
+            //this.setState({callState: IN_CALL});
             webRtcPeer.processAnswer(message.sdpAnswer);
         }
         console.log(this.state);
     }
 
     incomingCall(message) {
-        // If bussy just reject without disturbing user
-        console.log('inComing call()', this.state.callState);
-        //console.log(callState);
+        //If bussy just reject without disturbing user
+        //console.log('inComing call()', this.state.callState);
+        console.log("incomingCall()");
 
         if (this.state.callState != NO_CALL) {
             var response = {
@@ -261,7 +278,7 @@ export class Home extends React.Component {
                     video: {
                         width: {
                             min: "640",
-                            max: "1223"
+                            max: "1240"
                         },
                         height: {
                             min: "480",
@@ -283,20 +300,23 @@ export class Home extends React.Component {
                     this.generateOffer(function(error, offerSdp) {
                         if (error) {
                             console.error(error);
-                            tis.setState({callState: NO_CALL});
+                            //tis.setState({callState: NO_CALL});
                         }
                         var response = {
                             id : 'incomingCallResponse',
                             from : message.from,
+                            to : message.to,
                             callResponse : 'accept',
-                            sdpOffer : offerSdp
+                            sdpOffer : offerSdp,
                         };
                         console.log("sending sdpOffer ::", response)
                         tis.sendMessage(response);
                     });
                 });
 
-        } else {
+        }
+
+        else {
             var response = {
                 id : 'incomingCallResponse',
                 from : message.from,
@@ -311,20 +331,21 @@ export class Home extends React.Component {
     }
 
     startCommunication(message) {
-        this.setState({callState: IN_CALL});
+        //this.setState({callState: IN_CALL});
         console.log("startCommunication :: ",message.sdpAnswer );
         webRtcPeer.processAnswer(message.sdpAnswer);
     }
 
     onIceCandidate(candidate) {
-        console.log(candidate);
         console.log('Local candidate' , JSON.stringify(candidate));
-
+        console.log(this);
         var message = {
+            roomId: this.webinarId,
+            userId: this.userId,
             id : 'onIceCandidate',
             candidate : candidate
         }
-        console.log(this);
+        console.log('onIceCandidate :: '+ message.candidate);
         this.sendMessage(message);
     }
 
@@ -343,13 +364,6 @@ export class Home extends React.Component {
     render(){
         return(
             <div>
-                {<input id='name'/>}
-                {<button onClick={this.Register.bind(this)} className='btn btn-primary'>Register</button>}
-                <hr/>
-                <input id='peer'/>
-                {<button onClick={this.Call.bind(this)} className='btn btn-danger'>Call</button>}
-                {<button onClick={this.stop.bind(this)} className='btn btn-danger'> Stop</button>}
-                <hr/>
                 <div className="container">
                     <div className="row">
                         <div className="col-4">
