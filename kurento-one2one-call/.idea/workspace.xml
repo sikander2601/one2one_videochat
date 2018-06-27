@@ -23,7 +23,7 @@
       <file leaf-file-name="index.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/frontend/src/index.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5">
+            <state relative-caret-position="30">
               <caret line="2" column="4" selection-start-line="2" selection-start-column="4" selection-end-line="2" selection-end-column="4" />
               <folding>
                 <element signature="e#274#325#0" expanded="true" />
@@ -32,20 +32,20 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="server.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="server.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Server/server.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2444">
-              <caret line="254" column="39" lean-forward="true" selection-start-line="254" selection-start-column="39" selection-end-line="254" selection-end-column="39" />
+            <state relative-caret-position="409">
+              <caret line="324" column="32" selection-start-line="324" selection-start-column="18" selection-end-line="324" selection-end-column="32" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Home.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Home.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/frontend/src/conditionalComponent/Home.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1297">
-              <caret line="89" column="41" lean-forward="true" selection-start-line="89" selection-start-column="41" selection-end-line="89" selection-end-column="41" />
+            <state relative-caret-position="1845">
+              <caret line="123" column="21" lean-forward="true" selection-start-line="123" selection-start-column="21" selection-end-line="123" selection-end-column="21" />
               <folding>
                 <element signature="e#0#26#0" expanded="true" />
               </folding>
@@ -97,36 +97,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>chat</find>
-      <find>registerResponse</find>
-      <find>videoInput</find>
-      <find>webin</find>
-      <find>webinarId</find>
-      <find>this.props</find>
-      <find>register</find>
-      <find>startcall</find>
-      <find>userregis</find>
-      <find>name</find>
-      <find>regis</find>
-      <find>register(</find>
-      <find>stop</find>
-      <find>message</find>
       <find>UserRoom.register</find>
       <find>callState</find>
-      <find>incomingCallResponse</find>
       <find>caller</find>
       <find>socket</find>
-      <find>call</find>
-      <find>call(</find>
-      <find>clearCandidatesQueue</find>
       <find>CandidatesQueue</find>
       <find>inco</find>
       <find>ice</find>
       <find>Connection</find>
-      <find>onIce</find>
-      <find>onice</find>
-      <find>onIceCandidate</find>
+      <find>incomingcall</find>
       <find>incom</find>
+      <find>onice</find>
+      <find>candidatesQueue</find>
+      <find>sdp</find>
+      <find>callRes</find>
+      <find>pipeline.createPipeline</find>
+      <find>createp</find>
+      <find>call</find>
+      <find>incoming</find>
+      <find>inc</find>
+      <find>call()</find>
+      <find>incomingCallResponse(</find>
+      <find>call(</find>
+      <find>incoming Call</find>
+      <find>incomingCallResponse</find>
+      <find>clearCandidatesQueue</find>
+      <find>CallMediaPipeline</find>
+      <find>createPipeline</find>
+      <find>onIceCandidate</find>
+      <find>addice</find>
+      <find>onIce</find>
     </findStrings>
   </component>
   <component name="IdeDocumentHistory">
@@ -184,7 +184,7 @@
       <path value="$PROJECT_DIR$/frontend/package.json" />
     </packageJsonPaths>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="1">
     <option name="y" value="23" />
     <option name="width" value="1440" />
     <option name="height" value="810" />
@@ -319,12 +319,12 @@
       <workItem from="1529084336195" duration="19506000" />
       <workItem from="1529314573507" duration="35081000" />
       <workItem from="1529485188316" duration="11663000" />
-      <workItem from="1529594957784" duration="48704000" />
+      <workItem from="1529594957784" duration="67955000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="122886000" />
+    <option name="totallyTimeSpent" value="142137000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1440" height="810" extended-state="0" />
@@ -334,6 +334,7 @@
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
+      <window_info anchor="bottom" id="Find" order="1" weight="0.32959327" />
       <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -356,7 +357,6 @@
       <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info id="Capture Tool" order="2" />
-      <window_info anchor="bottom" id="Find" order="1" weight="0.32959327" />
       <window_info anchor="right" id="Maven Projects" order="3" />
     </layout>
     <layout-to-restore>
@@ -495,19 +495,9 @@
     <entry file="file://$PROJECT_DIR$/frontend/src/conditionalComponent/Head.js">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/frontend/src/conditionalComponent/Home.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1297">
-          <caret line="89" column="41" lean-forward="true" selection-start-line="89" selection-start-column="41" selection-end-line="89" selection-end-column="41" />
-          <folding>
-            <element signature="e#0#26#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/frontend/src/index.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5">
+        <state relative-caret-position="30">
           <caret line="2" column="4" selection-start-line="2" selection-start-column="4" selection-end-line="2" selection-end-column="4" />
           <folding>
             <element signature="e#274#325#0" expanded="true" />
@@ -517,8 +507,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Server/server.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2444">
-          <caret line="254" column="39" lean-forward="true" selection-start-line="254" selection-start-column="39" selection-end-line="254" selection-end-column="39" />
+        <state relative-caret-position="409">
+          <caret line="324" column="32" selection-start-line="324" selection-start-column="18" selection-end-line="324" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/frontend/src/conditionalComponent/Home.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1845">
+          <caret line="123" column="21" lean-forward="true" selection-start-line="123" selection-start-column="21" selection-end-line="123" selection-end-column="21" />
+          <folding>
+            <element signature="e#0#26#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

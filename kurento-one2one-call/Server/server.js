@@ -99,7 +99,7 @@ Users.prototype.getById = function(id) {
 }
 
 Users.prototype.sendMessage = function(message, socket) {
-    console.log('sendMessage :: to' + socket.id);
+    console.log('sendMessage :: to' + socket.id + " " + message.id);
     socket.emit('message',JSON.stringify(message));
     //io.to(message.roomId).emit('message',JSON.stringify(message.message))
 }
@@ -137,7 +137,8 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, socket
 
                 callerWebRtcEndpoint.on('OnIceCandidate', function(event) {
                     var candidate = kurento.getComplexType('IceCandidate')(event.candidate);
-                    userRegistry.getById(callerId).socket.emit('message',JSON.stringify({
+                    var caller = User.getById(callerId);
+                    caller.socket.emit('message',JSON.stringify({
                         id : 'iceCandidate',
                         candidate : candidate
                     }));
@@ -158,7 +159,8 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, socket
 
                     calleeWebRtcEndpoint.on('OnIceCandidate', function(event) {
                         var candidate = kurento.getComplexType('IceCandidate')(event.candidate);
-                        userRegistry.getById(calleeId).socket.emit('message',JSON.stringify({
+                        var callee = User.getById(calleeId);
+                        callee.socket.emit('message',JSON.stringify({
                             id : 'iceCandidate',
                             candidate : candidate
                         }));
@@ -176,7 +178,7 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, socket
                                 return callback(error);
                             }
                         });
-
+                        console.log("pipeline :: " + pipeline);
                         self.pipeline = pipeline;
                         self.webRtcEndpoint[callerId] = callerWebRtcEndpoint;
                         self.webRtcEndpoint[calleeId] = calleeWebRtcEndpoint;
@@ -239,9 +241,15 @@ io.on('connection', function(socket) {
             let user = {
                 id: userId,
                 room: roomId,
+                socket: socket,
             }
             User.register(user);
-
+            message = {
+                id: 'roomJoined',
+                message: "user joined the room " + roomId + " length:" + roomLength,
+                roomId: roomId,
+                roomLength: roomLength,
+            };
             //console.log('socket :: ' + socket);
             if (roomLength === 1) {
                 var room_entity = {
@@ -251,6 +259,7 @@ io.on('connection', function(socket) {
                 };
 
                 Room.register(roomId, room_entity);
+                socket.emit('roomJoined',message);
             }
             else if (roomLength === 2){
                 var temp = Room.getById(roomId);
@@ -261,12 +270,7 @@ io.on('connection', function(socket) {
                     id:"startCall",
                     numberOfMember : roomLength
                 }) )
-                message = {
-                    id: 'roomJoined',
-                    message: "user joined the room " + roomId + " length:" + roomLength,
-                    roomId: roomId,
-                    roomLength: roomLength,
-                };
+
                 temp = Room.getById(roomId);
                 console.log(temp);
                 socket.emit('roomJoined',message);
@@ -296,13 +300,22 @@ io.on('connection', function(socket) {
 
             case 'call':
                 let users = Room.getById(message.roomId);
-                console.log('Sockets :: ' + users.user1.socket.id, users.user2.socket.id)
-                call(message.roomId , users.user1, users.user2, message.sdpOffer);
+                //console.log('Sockets :: ' + users.user1.socket.id, users.user2.socket.id)
+                var from = null;
+                var to = null;
+                if( users.user1.id === message.userId){
+                     from = users.user1;
+                     to = users.user2;
+                 }
+                 else{
+                    from = users.user2;
+                    to = users.user1;
+                }
+                call(message.roomId , from, to, message.sdpOffer);
                 break;
 
             case 'incomingCallResponse':
                 incomingCallResponse(message.roomId, message.from, message.to, message.callResponse, message.sdpOffer);
-                console.log("message.sdpOffer")
                 break;
 
             case 'stop':
@@ -367,12 +380,12 @@ function stop(roomId) {
         stoppedUser.sendMessage(message)
     }
 
-    clearCandidatesQueue(roomId);
+    clear(calleeId);
 }
 
 function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSdp) {
-    console.log("incoming call :: ", roomId, from, callResponse, calleeSdp);
-    clearCandidatesQueue(roomId);
+    console.log("incoming call :: ", roomId,callerId, calleeId, callResponse);
+    clearCandidatesQueue(calleeId);
 
     function onError(callerReason, calleeReason) {
         console.log("onError :: " , callerReason, calleeReason);
@@ -383,37 +396,45 @@ function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSd
                 response: 'rejected'
             }
             if (callerReason) callerMessage.message = callerReason;
-            caller.sendMessage(callerMessage);
+            var caller = User.getById(callerId);
+            User.sendMessage(callerMessage, caller.socket);
         }
 
         var calleeMessage = {
             id: 'stopCommunication'
         };
         if (calleeReason) calleeMessage.message = calleeReason;
-        callee.sendMessage(calleeMessage);
+        var callee = User.getById(calleeId);
+        User.sendMessage(calleeMessage, callee.socket);
     }
 
-    var callee = calleeId;
-    if (!from || !user.getById(from)) {
+    var callee = User.getById(calleeId);
+    var from = callerId;
+    if (!User.getById(from)) {
         return onError(null, 'unknown from = ' + from);
     }
-    var caller = callerId;
+
+    var caller = User.getById(callerId);
 
     if (callResponse === 'accept') {
+        console.log(' \n 12345 :: \n \n');
+        console.log( " Caller and callee :: " + callee.id + caller.id);
         var pipeline = new CallMediaPipeline();
-        pipelines[caller] = pipeline;
-        pipelines[callee] = pipeline;
 
-        pipeline.createPipeline(caller, callee, function(error) {
+        pipelines[caller.id] = pipeline;
+        pipelines[callee.id] = pipeline;
+
+        pipeline.createPipeline(caller.id, callee.id, caller.socket, function(error) {
             if (error) {
+                console.log('EROROROROR');
                 return onError(error, error);
             }
-
+            console.log("caller detlays :: \n \n " + caller);
             pipeline.generateSdpAnswer(caller.id, caller.sdpOffer, function(error, callerSdpAnswer) {
                 if (error) {
                     return onError(error, error);
                 }
-
+                console.log('hi :: here \n\n')
                 pipeline.generateSdpAnswer(callee.id, calleeSdp, function(error, calleeSdpAnswer) {
                     if (error) {
                         return onError(error, error);
@@ -424,15 +445,16 @@ function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSd
                         sdpAnswer: calleeSdpAnswer,
                         callee : "callee"
                     };
-                    //callee.sendMessage(message);
-                    callee.socket.emit(message.id, message);
+                    User.sendMessage(message, callee.socket);
+                    //callee.socket.emit(message.id, message);
                     message = {
                         id: 'callResponse',
                         response : 'accepted',
                         sdpAnswer: callerSdpAnswer
                     };
-                    caller.socket.emit(message.id, message);
-                    //caller.sendMessage(message);
+                    //caller.socket.emit(message.id, message);
+                    console.log('in incomning call response');
+                    User.sendMessage(message, caller.socket);
                 });
             });
         });
@@ -442,30 +464,33 @@ function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSd
             response: 'rejected',
             message: 'user declined'
         };
+        console.log('elsee');
         caller.socket.emit(decline.id, decline);
     }
 }
 
-function call(roomId, to, from, sdpOffer) {
-    clearCandidatesQueue(roomId);
-    console.log("Here")
+function call(roomId, from, to, sdpOffer) {
+    clearCandidatesQueue(from.id);
+    console.log("Here");
+
     //var caller = userRegistry.getById(callerId);
     //var rejectCause = 'User ' + to + ' is not registered';
-    if (Room.getById(roomId)) {
-        caller = from;
-        callee = to;
-        caller.sdpOffer = sdpOffer
+    if (User.getById(to.id)) {
+        var caller = from.id;
+        var callee = to.id;
+        caller.sdpOffer = sdpOffer;
         callee.peer = caller;
         caller.peer = callee;
-        var message = {
+
+        var msg = {
             id: 'incomingCall',
             roomId: roomId,
-            from: from,
-            to: to,
+            from: caller,
+            sdp: sdpOffer,
         };
+
         try{
-            console.log('calling :: incoming call ', to.socket.id , message);
-            return User.sendMessage(message, to.socket);
+            return User.sendMessage(msg, to.socket);
         } catch(exception) {
             rejectCause = "Error " + exception;
         }
@@ -477,7 +502,6 @@ function call(roomId, to, from, sdpOffer) {
             response: 'rejected: ',
             message: rejectCause
         };
-        console.log("from :: " + from.socket.id);
         User.sendMessage(message, from.socket);
     }
 }
@@ -504,13 +528,14 @@ function clearCandidatesQueue(userId) {
 }
 
 function onIceCandidate(userId, _candidate) {
-    console.log("onIceCandidate :: Candidate :" + _candidate );
+    //console.log("onIceCandidate :: Candidate :" + _candidate );
     var candidate = kurento.getComplexType('IceCandidate')(_candidate);
     var user = User.getById(userId);
 
     if (pipelines[userId] && pipelines[userId].webRtcEndpoint && pipelines[userId].webRtcEndpoint[userId]) {
         var webRtcEndpoint = pipelines[userId].webRtcEndpoint[userId];
         webRtcEndpoint.addIceCandidate(candidate);
+        console.log('edhar');
     }
     else {
         if (!candidatesQueue[userId]) {

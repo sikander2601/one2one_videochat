@@ -36,9 +36,6 @@ export class Home extends React.Component {
 
 
     sendMessage = (message) => {
-        if(message.id == 'onIceCandidate'){
-            console.log('Dobara')
-        }
         var jsonMessage = JSON.stringify(message);
         console.log('Senging message: ' , message);
         socket.emit('message',jsonMessage);
@@ -99,6 +96,11 @@ export class Home extends React.Component {
             console.log(data);
             this.recieveChat(data);
         });
+
+        socket.on('trial', (msg) => {
+            console.log(msg);
+        }
+        );
 
         var tis = this;
         socket.on('message', (data) => {
@@ -178,21 +180,20 @@ export class Home extends React.Component {
                 console.error(error);
                 tis.setState({callState: NO_CALL});
             }
-            console.log(tis);
+            //console.log(tis);
             this.generateOffer(function(error, offerSdp) {
                 if (error) {
                     console.error(error);
                     tis.setState({callState: NO_CALL});
                 }
-                console.log('Line :: 182')
                 var message = {
                     id : 'call',
                     roomId: tis.webinarId,
-                    //from : document.getElementById('name').value,
+                    from : this.userId,
                     //to : document.getElementById('peer').value,
                     sdpOffer : offerSdp
                 };
-                console.log(message);
+                //console.log(message);
                 tis.sendMessage(message);
             })
         });
@@ -242,10 +243,10 @@ export class Home extends React.Component {
             console.log(errorMessage);
             this.stop(true);
         } else {
-            //this.setState({callState: IN_CALL});
+            this.setState({callState: IN_CALL});
             webRtcPeer.processAnswer(message.sdpAnswer);
         }
-        console.log(this.state);
+        console.log('callResponse');
     }
 
     incomingCall(message) {
@@ -261,8 +262,8 @@ export class Home extends React.Component {
                 message : 'bussy'
 
             };
-            console.log(1111111114444, response);
-            return this.sendMessage(response , "resp.");
+            console.log(1111111114444);
+            return this.sendMessage(response);
         }
 
         this.setState({callState: PROCESSING_CALL });
@@ -305,9 +306,10 @@ export class Home extends React.Component {
                         var response = {
                             id : 'incomingCallResponse',
                             from : message.from,
-                            to : message.to,
                             callResponse : 'accept',
                             sdpOffer : offerSdp,
+                            roomId: tis.webinarId,
+                            to: tis.userId,
                         };
                         console.log("sending sdpOffer ::", response)
                         tis.sendMessage(response);
@@ -327,11 +329,11 @@ export class Home extends React.Component {
             this.sendMessage(response);
             this.stop(true);
         }
-        console.log(this.state);
+        //console.log(this.state);
     }
 
     startCommunication(message) {
-        //this.setState({callState: IN_CALL});
+        this.setState({callState: IN_CALL});
         console.log("startCommunication :: ",message.sdpAnswer );
         webRtcPeer.processAnswer(message.sdpAnswer);
     }
