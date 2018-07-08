@@ -1,0 +1,10 @@
+.videoElement {
+    float: left;
+    display: inline-block;
+    margin: 10vh auto 10vh 25px;
+}
+
+.react-player {
+    width: 100%;
+    margin: auto auto;
+}

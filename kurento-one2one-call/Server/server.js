@@ -1,45 +1,25 @@
-var path = require('path');
-var express = require('express');
-var minimist = require('minimist');
-var url = require('url');
-var kurento = require('kurento-client');
-var fs    = require('fs');
-var http = require('http');
-var socketio = require('socket.io');
+let path = require('path');
+let express = require('express');
+let minimist = require('minimist');
+let url = require('url');
+let kurento = require('kurento-client');
+let http = require('http');
+let socketio = require('socket.io');
 
-//var users = {};
-
-var argv = minimist(process.argv.slice(2), {
+let argv = minimist(process.argv.slice(2), {
   default: {
       as_uri: "http://localhost:8443",
       ws_uri: "http://128.199.175.103:8888/kurento"
   }
 });
 
-var options =
-{
-  key:  fs.readFileSync('keys/server.key'),
-  cert: fs.readFileSync('keys/server.crt')
-};
-
-var app = express();
-//var http = require('http').Server(app);
-//var io = require('socket.io')(http);
-/*
- * Definition of global variables.
- */
+let app = express();
 
 var kurentoClient = null;
 var pipelines = {};
 var candidatesQueue = {};
-var idCounter = 0;
 let User = new Users();
 let Room = new Rooms();
-
-function nextUniqueId() {
-    idCounter++;
-    return idCounter.toString();
-}
 
 var asUrl = url.parse(argv.as_uri);
 var port = asUrl.port;
@@ -54,26 +34,20 @@ server.listen(port, function() {
  * Definition of helper classes
  */
 
-// Represents caller and callee sessions
-
-
 function Rooms() {
     this.roomsById= {};
 }
 
 Rooms.prototype.sendMessage = function(message) {
-    //this.socket.emit('message',JSON.stringify(message));
-    io.to(message.roomId).emit('message',JSON.stringify(message.message))
+    io.to(message.roomId).emit('message',JSON.stringify(message))
 }
-
 
 Rooms.prototype.getById = function(roomId) {
     return this.roomsById[roomId];
 }
 
-
-Rooms.prototype.register = function(roomid, room) {
-    this.roomsById[roomid] = room;
+Rooms.prototype.register = function(roomId, room) {
+    this.roomsById[roomId] = room;
 }
 
 Rooms.prototype.unregister = function(id) {
@@ -99,10 +73,9 @@ Users.prototype.getById = function(id) {
 }
 
 Users.prototype.sendMessage = function(message, socket) {
-    console.log('sendMessage :: to' + socket.id + " " + message.id);
     socket.emit('message',JSON.stringify(message));
-    //io.to(message.roomId).emit('message',JSON.stringify(message.message))
 }
+
 
 // Represents a B2B active call
 function CallMediaPipeline() {
@@ -178,7 +151,6 @@ CallMediaPipeline.prototype.createPipeline = function(callerId, calleeId, socket
                                 return callback(error);
                             }
                         });
-                        console.log("pipeline :: " + pipeline);
                         self.pipeline = pipeline;
                         self.webRtcEndpoint[callerId] = callerWebRtcEndpoint;
                         self.webRtcEndpoint[calleeId] = calleeWebRtcEndpoint;
@@ -207,35 +179,18 @@ CallMediaPipeline.prototype.release = function() {
 /*
  * Server startup
  */
-/*
-var asUrl = url.parse(argv.as_uri);
-var port = asUrl.port;
-var server = https.createServer(options, app).listen(port, function() {
-    console.log('Kurento Tutorial started');
-    console.log('Open ' + url.format(asUrl) + ' with a WebRTC capable browser');
-});
-*/
-/*
-var wss = new ws.Server({
-    server : server,
-    path : '/one2one'
-});
-*/
 
 io.on('connection', function(socket) {
-    //var sessionId = nextUniqueId();
-
     socket.on('error', function (error) {
-        console.log('Connection ' + sessionId + ' error');
-        stop(sessionId);
+        console.log('Connection ' + sessionId + ' error'+ error);
+        stop(roomId);
     });
 
     socket.on("joinRoom", function(roomParams){
-        console.log('joinRoom :: '+ roomParams);
         let roomId  = roomParams.webinarId;
         socket.join(roomParams.webinarId);
-        let roomLength = io.sockets.adapter.rooms[roomId].length
-        console.log('roomLength ::' + roomLength );
+        let roomLength = io.sockets.adapter.rooms[roomId].length;
+
         if(roomLength <= 2) {
             let userId = roomParams.userId;
             let user = {
@@ -244,13 +199,14 @@ io.on('connection', function(socket) {
                 socket: socket,
             }
             User.register(user);
+
             message = {
                 id: 'roomJoined',
                 message: "user joined the room " + roomId + " length:" + roomLength,
                 roomId: roomId,
                 roomLength: roomLength,
             };
-            //console.log('socket :: ' + socket);
+
             if (roomLength === 1) {
                 var room_entity = {
                     user1: { 'id': userId,
@@ -259,33 +215,26 @@ io.on('connection', function(socket) {
                 };
 
                 Room.register(roomId, room_entity);
-                socket.emit('roomJoined',message);
             }
             else if (roomLength === 2){
                 var temp = Room.getById(roomId);
-                //console.log(temp);
                 temp.user2 = { 'id': userId,
-                    'socket':  socket }
-                Room.sendMessage('message', JSON.stringify({
-                    id:"startCall",
-                    numberOfMember : roomLength
-                }) )
-
-                temp = Room.getById(roomId);
-                console.log(temp);
-                socket.emit('roomJoined',message);
+                    'socket':  socket };
+                message = {
+                    id:"roomJoined",
+                    roomLength: roomLength,
+                    roomId: roomId,
+                };
+                User.sendMessage(message, socket);
             }
         }
     });
 
     socket.on('close', function (data) {
-        console.log('Connection ' + data.roomId + ' closed');
         stop(data.roomId);
-        //userRegistry.unregister(sessionId);
     });
 
     socket.on('chat', function(data){
-        console.log('chat');
         io.to(data.roomId).emit('chat', data);
     })
 
@@ -294,24 +243,18 @@ io.on('connection', function(socket) {
         console.log('Connection ' , message.roomId , ' received message ', message);
 
         switch (message.id) {
-            //case 'register':
-              //  console.log('now_here');
-                //break;
 
             case 'call':
                 let users = Room.getById(message.roomId);
-                //console.log('Sockets :: ' + users.user1.socket.id, users.user2.socket.id)
-                var from = null;
-                var to = null;
                 if( users.user1.id === message.userId){
-                     from = users.user1;
-                     to = users.user2;
+                     var from = users.user1;
+                     var to = users.user2;
                  }
                  else{
                     from = users.user2;
                     to = users.user1;
                 }
-                call(message.roomId , from, to, message.sdpOffer);
+                call(message.roomId, from, to, message.sdpOffer);
                 break;
 
             case 'incomingCallResponse':
@@ -331,12 +274,12 @@ io.on('connection', function(socket) {
                     id: 'error',
                     message: 'Invalid message ' + message
                 }));
-                console.log(message);
                 break;
         }
 
     });
 });
+
 
 // Recover kurentoClient for the first time.
 function getKurentoClient(callback) {
@@ -355,6 +298,7 @@ function getKurentoClient(callback) {
     });
 }
 
+
 function stop(roomId) {
     if (!pipelines[roomId]) {
         return;
@@ -366,29 +310,16 @@ function stop(roomId) {
 
 
     let user = Room.getById(roomId);
-    Room.unregister(roomId)
+    Room.unregister(roomId);
     User.unregister(user.user1.Id);
     User.unregister(user.user2.Id);
-
-    if (stoppedUser) {
-        stoppedUser.peer = null;
-        delete pipelines[stoppedUser.id];
-        var message = {
-            id: 'stopCommunication',
-            message: 'remote user hanged out'
-        }
-        stoppedUser.sendMessage(message)
-    }
-
-    clear(calleeId);
 }
 
+
 function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSdp) {
-    console.log("incoming call :: ", roomId,callerId, calleeId, callResponse);
     clearCandidatesQueue(calleeId);
 
     function onError(callerReason, calleeReason) {
-        console.log("onError :: " , callerReason, calleeReason);
         if (pipeline) pipeline.release();
         if (caller) {
             var callerMessage = {
@@ -396,7 +327,6 @@ function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSd
                 response: 'rejected'
             }
             if (callerReason) callerMessage.message = callerReason;
-            var caller = User.getById(callerId);
             User.sendMessage(callerMessage, caller.socket);
         }
 
@@ -404,7 +334,6 @@ function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSd
             id: 'stopCommunication'
         };
         if (calleeReason) calleeMessage.message = calleeReason;
-        var callee = User.getById(calleeId);
         User.sendMessage(calleeMessage, callee.socket);
     }
 
@@ -415,10 +344,8 @@ function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSd
     }
 
     var caller = User.getById(callerId);
-
     if (callResponse === 'accept') {
-        console.log(' \n 12345 :: \n \n');
-        console.log( " Caller and callee :: " + callee.id + caller.id);
+
         var pipeline = new CallMediaPipeline();
 
         pipelines[caller.id] = pipeline;
@@ -426,15 +353,12 @@ function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSd
 
         pipeline.createPipeline(caller.id, callee.id, caller.socket, function(error) {
             if (error) {
-                console.log('EROROROROR');
                 return onError(error, error);
             }
-            console.log("caller detlays :: \n \n " + caller);
             pipeline.generateSdpAnswer(caller.id, caller.sdpOffer, function(error, callerSdpAnswer) {
                 if (error) {
                     return onError(error, error);
                 }
-                console.log('hi :: here \n\n')
                 pipeline.generateSdpAnswer(callee.id, calleeSdp, function(error, calleeSdpAnswer) {
                     if (error) {
                         return onError(error, error);
@@ -446,14 +370,12 @@ function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSd
                         callee : "callee"
                     };
                     User.sendMessage(message, callee.socket);
-                    //callee.socket.emit(message.id, message);
+
                     message = {
                         id: 'callResponse',
                         response : 'accepted',
                         sdpAnswer: callerSdpAnswer
                     };
-                    //caller.socket.emit(message.id, message);
-                    console.log('in incomning call response');
                     User.sendMessage(message, caller.socket);
                 });
             });
@@ -464,34 +386,31 @@ function incomingCallResponse(roomId ,callerId, calleeId, callResponse, calleeSd
             response: 'rejected',
             message: 'user declined'
         };
-        console.log('elsee');
-        caller.socket.emit(decline.id, decline);
+        User.sendMessage(decline, caller.socket);
     }
 }
 
 function call(roomId, from, to, sdpOffer) {
     clearCandidatesQueue(from.id);
-    console.log("Here");
 
-    //var caller = userRegistry.getById(callerId);
-    //var rejectCause = 'User ' + to + ' is not registered';
     if (User.getById(to.id)) {
         var caller = from.id;
         var callee = to.id;
-        caller.sdpOffer = sdpOffer;
-        callee.peer = caller;
-        caller.peer = callee;
+        from["sdpOffer"] = sdpOffer;
+        User.getById(from.id).sdpOffer= sdpOffer;
+        to.peer = caller;
+        from.peer = callee;
 
         var msg = {
             id: 'incomingCall',
             roomId: roomId,
             from: caller,
-            sdp: sdpOffer,
         };
 
         try{
             return User.sendMessage(msg, to.socket);
-        } catch(exception) {
+        }
+        catch(exception) {
             rejectCause = "Error " + exception;
         }
 
@@ -505,22 +424,7 @@ function call(roomId, from, to, sdpOffer) {
         User.sendMessage(message, from.socket);
     }
 }
-/*
-function register(id, socket, callback) {
-    socket.emit('create',socket.id);
-    function onError(error) {
-        socket.emit('message',JSON.stringify({id:'registerResponse', response : 'rejected ', message: error}));
-    }
 
-    userRegistry.register(new UserSession(id, socket));
-    try {
-        console.log((JSON.stringify({id: 'registerResponse', response: 'accepted'})));
-        socket.emit('message',JSON.stringify({id: 'registerResponse', response: 'accepted'}));
-    } catch(exception) {
-        onError(exception);
-    }
-}
-*/
 function clearCandidatesQueue(userId) {
     if (candidatesQueue[userId]) {
         delete candidatesQueue[userId];
@@ -528,14 +432,11 @@ function clearCandidatesQueue(userId) {
 }
 
 function onIceCandidate(userId, _candidate) {
-    //console.log("onIceCandidate :: Candidate :" + _candidate );
-    var candidate = kurento.getComplexType('IceCandidate')(_candidate);
-    var user = User.getById(userId);
+    let candidate = kurento.getComplexType('IceCandidate')(_candidate);
 
     if (pipelines[userId] && pipelines[userId].webRtcEndpoint && pipelines[userId].webRtcEndpoint[userId]) {
-        var webRtcEndpoint = pipelines[userId].webRtcEndpoint[userId];
+        let webRtcEndpoint = pipelines[userId].webRtcEndpoint[userId];
         webRtcEndpoint.addIceCandidate(candidate);
-        console.log('edhar');
     }
     else {
         if (!candidatesQueue[userId]) {

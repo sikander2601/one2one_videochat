@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>USERS</title>
+  </head>
+  <body>
+    <h1>USERS</h1>
+
+    {% for user in users %}
+      {{ user.id }} <br>
+      {{ user.first_name }} <br>
+      {{ user.last_name }} <br>
+    {% endfor %}
+
+    <h1>EVENT</h1>
+    {% for event in events %}
+    {{ event.session_id }} <br>
+    {{ event.mentor_id.id }} <br>
+    {{ event.mentee_id.id }} <br>
+  {% endfor %}
+
+    <h1>MENTEE</h1>
+    {% for mentee in mentees %}
+    {{ mentee.id }} <br>
+    {{ mentee.first_name }} <br>
+    {{ mentee.last_name }} <br>
+    {% endfor %}
+  </body>
+</html>

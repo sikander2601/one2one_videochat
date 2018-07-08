@@ -1,17 +1,15 @@
 import React from "react";
 import io from 'socket.io-client';
 import kurentoUtils from 'kurento-utils';
-
-//import { Chat } from "./Chat";
+import '../CSS/Home.css';
+import {VideoPlayer} from "../presentationalComponent/VideoPlayer";
+import {Chat} from "./Chat";
 
 const socketUrl = 'http://localhost:8443';
 const socket = io(socketUrl);
 
 let webRtcPeer;
 
-//const NOT_REGISTERED = 0;
-//const REGISTERING = 1;
-//const REGISTERED = 2;
 
 const NO_CALL = 0;
 const PROCESSING_CALL = 1;
@@ -28,10 +26,13 @@ export class Home extends React.Component {
             //registerState: NOT_REGISTERED,
             callState: NO_CALL,
             message: [],
+            localStream : null,
+            remoteStream: [],
         }
-
-        //this.Call = this.Call.bind(this);
-        //this.stop = this.stop.bind(this);
+        this.setLocalStreamURL = this.setLocalStreamURL.bind(this);
+        this.Call = this.Call.bind(this);
+        this.stop = this.stop.bind(this);
+        this.setBroadcastStreamURL = this.setBroadcastStreamURL.bind(this);
     };
 
 
@@ -82,42 +83,25 @@ export class Home extends React.Component {
             console.log('connected');
             socket.emit("joinRoom",roomParams )
         });
-       
-       
-        socket.on("roomJoined", (data)=>{
-            console.log("roomJoined :: ",data);
-            if(data.roomLength === 2 ){
-                console.log("startCall ");
-                this.Call();
-            }
-        })
 
         socket.on('chat',(data)=> {
             console.log(data);
             this.recieveChat(data);
         });
 
-        socket.on('trial', (msg) => {
-            console.log(msg);
-        }
-        );
-
-        var tis = this;
         socket.on('message', (data) => {
             var parsedMessage = JSON.parse(data);
-            console.info('Received message: ' , data);
-
 
             switch (parsedMessage.id) {
-                //case 'startCall':
-                //      console.log("startCall ", parsedMessage);
-                //      this.Call();
-                //      break;
-                //case 'registerResponse':
-                //     this.resgisterResponse(parsedMessage);
-                //     break;
+                case 'roomJoined':
+                      console.log("roomJoined :: ",parsedMessage.roomLength);
+                      if(parsedMessage.roomLength === 2 ){
+                        console.log("startCall" + parsedMessage.roomLength);
+                        this.Call();
+                      }
+                      break;
                 case 'callResponse':
-                     this.callResponse(parsedMessage);
+                      this.callResponse(parsedMessage);
                       break;
                 case 'incomingCall':
                       console.log('Call is coming.')
@@ -132,15 +116,38 @@ export class Home extends React.Component {
                       this.stop(true);
                       break;
                 case 'iceCandidate':
-                      console.log('iceCandidate :: ' + parsedMessage);
                       webRtcPeer.addIceCandidate(parsedMessage.candidate);
                       break;
             default:
-            console.error('Unrecognized message', parsedMessage.message);
+            console.error('Unrecognized message', parsedMessage);
         }
         });
         console.log(socket);
     };
+
+    setLocalStreamURL(webrtcpeerobj) {
+        let localMediaStream = webrtcpeerobj.getLocalStream();
+            if (localMediaStream) {
+            let uri = URL.createObjectURL(localMediaStream);
+            //console.log("LiveBroadcast::presenter/viewer:: interval clearing interval",uri);
+            console.log("Localstream ", uri);
+                this.setState({ localStream: uri });
+            // clearInterval(refreshIntervalId);
+        } else {
+            localMediaStream = webrtcpeerobj.getLocalStream();
+            // //console.log("LiveBroadcast::presenter/viewer:: interval not yet cleared ",localMediaStream, wertcpeerobj);
+        }
+    }
+
+    setBroadcastStreamURL(event, mediatype) {
+        let uri = URL.createObjectURL(event.stream);
+
+            let temp = this.state.remoteStream;
+            temp.push(uri);
+            this.setState({ remoteStream:temp });
+            console.log("Remote stream :: ", uri);
+            
+    }
 
     Call = () =>{
         console.log("Call()");
@@ -155,8 +162,6 @@ export class Home extends React.Component {
         //showSpinner(videoInput, videoOutput);
 
         var options = {
-            localVideo : this.state.videoInput,
-            remoteVideo : this.state.videoOutput,
             mediaConstraints: {
                 audio: true,
                 video: {
@@ -175,17 +180,19 @@ export class Home extends React.Component {
         var tis = this;
 
         webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options, function(
-            error) {
+            error) {    
             if (error) {
                 console.error(error);
                 tis.setState({callState: NO_CALL});
             }
+            tis.setLocalStreamURL(this);
             //console.log(tis);
             this.generateOffer(function(error, offerSdp) {
                 if (error) {
                     console.error(error);
                     tis.setState({callState: NO_CALL});
                 }
+
                 var message = {
                     id : 'call',
                     roomId: tis.webinarId,
@@ -245,6 +252,7 @@ export class Home extends React.Component {
         } else {
             this.setState({callState: IN_CALL});
             webRtcPeer.processAnswer(message.sdpAnswer);
+            this.setBroadcastStreamURL
         }
         console.log('callResponse');
     }
@@ -272,8 +280,6 @@ export class Home extends React.Component {
             //showSpinner(videoInput, videoOutput);
 
             var options = {
-                localVideo : this.state.videoInput,
-                remoteVideo : this.state.videoOutput,
                 mediaConstraints: {
                     audio: true,
                     video: {
@@ -291,13 +297,17 @@ export class Home extends React.Component {
             }
 
             var tis = this;
+    
+            let setRemoteStreamURL = function (event) { tis.setBroadcastStreamURL(event); };
             webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerSendrecv(options,
                 function(error) {
                     if (error) {
                         console.error(error);
                         tis.setState({callState: NO_CALL});
                     }
-
+                    console.log(this.peerConnection);
+                    this.peerConnection.onaddstream = setRemoteStreamURL;
+                    tis.setLocalStreamURL(this);
                     this.generateOffer(function(error, offerSdp) {
                         if (error) {
                             console.error(error);
@@ -336,6 +346,7 @@ export class Home extends React.Component {
         this.setState({callState: IN_CALL});
         console.log("startCommunication :: ",message.sdpAnswer );
         webRtcPeer.processAnswer(message.sdpAnswer);
+        console.log("media url :: " + webRtcPeer.url);
     }
 
     onIceCandidate(candidate) {
@@ -364,41 +375,10 @@ export class Home extends React.Component {
         }));    }
 
     render(){
+        console.log('STATE ', this.state);
         return(
             <div>
-                <div className="container">
-                    <div className="row">
-                        <div className="col-4">
-                            <div className="card">
-                                <div className="card-body">
-                                    <div className="card-title">Global Chat</div>
-                                    <hr/>
-                                    <div className="messages" id>
-                                       {this.state.message.map(msg => {
-                                           console.log(msg)
-                                            return (
-                                            <div>  { msg } </div>
-                                        )
-                                    })}
-                                    </div>
-                                </div>
-                                <div className="card-footer">
-                                    <br/>
-                                    <input type="text" id='message' placeholder="Message" className="form-control"/>
-                                    <br/>
-                                    <button className="btn btn-primary form-control" onClick={this.sendChat.bind(this)}>Send</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-md-7" style={{ float: "right" }}>
-                            <div id="video">
-                                <video id="videoOutput" autoPlay width="640px" height="480px" poster="./download (1).png"></video>
-                                <video id="videoInput" autoPlay width="240px" height="180px" poster="./download (1).png" ></video>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+                <VideoPlayer urls = {[this.state.localStream, this.state.remoteStream[0]]} />
             </div>
         );
     }

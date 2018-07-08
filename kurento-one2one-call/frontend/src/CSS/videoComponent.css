@@ -1,0 +1,9 @@
+.player {
+    position: relative;
+    width: 100%;
+    display: inline;
+    height: 540px;
+    width: 720px;
+    vertical-align: middle;
+
+}

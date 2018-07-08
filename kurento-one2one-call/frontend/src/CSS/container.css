@@ -1,0 +1,34 @@
+.mainPage{
+    margin: 0;
+    padding: 0;
+    background-color: #43c6ac;
+    background-image: linear-gradient(0deg,#1f83c2 0,#32bdbf 100%);
+    background-size: cover;
+    bottom: 0;
+    left: 0;
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 2;
+}
+
+.content-Wrapper{
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: block;
+    flex-direction: row;
+    align-items: stretch;
+    align-content: stretch;
+    justify-content: space-around;
+    height: 100%;
+    /*padding: 58px 0;*/
+    position: absolute;
+    width: 100%;
+    overflow: hidden;
+}
+
+.content-Toolbar {
+    width: 100%;
+    bottom: 0;
+}
