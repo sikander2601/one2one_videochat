@@ -45,3 +45,10 @@ class EventTracker(models.Model):
 
     def __str__(self):
         return self.mentor_id.first_name + "    " +str(self.topic)
+
+class Webinar_Conversation(models.Model):
+    session_id = models.ForeignKey(EventTracker,db_index=True)
+    participant = models.ForeignKey(UserProfile)
+    creation_time = models.DateTimeField(auto_now=False,auto_now_add=True)
+    conversation = models.TextField(null=True,blank=True)
+    comments = models.CharField(max_length=100, null=True,blank=True)

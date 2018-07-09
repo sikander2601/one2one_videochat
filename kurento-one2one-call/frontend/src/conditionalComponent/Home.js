@@ -362,9 +362,8 @@ export class Home extends React.Component {
         this.sendMessage(message);
     }
 
-    sendChat(){
-        var msg= document.getElementById('message').value;
-        console.log(this.state.message);
+    sendChat(msg){
+        console.log('Chatting',this.state.message);
         socket.emit('chat', msg );
     }
 
@@ -375,7 +374,6 @@ export class Home extends React.Component {
         }));    }
 
     render(){
-        console.log('STATE ', this.state);
         return(
             <div>
                 <VideoPlayer urls = {[this.state.localStream, this.state.remoteStream[0]]} />

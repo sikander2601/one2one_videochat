@@ -7,7 +7,7 @@
     import { Home } from "./conditionalComponent/Home";
     import { VideoToolbar } from "./presentationalComponent/videoToolbar";
     import './CSS/container.css';
-import { Chat } from './conditionalComponent/Chat';
+    import { Chat } from './conditionalComponent/Chat';
 
     class App extends React.Component {
 
@@ -25,9 +25,6 @@ import { Chat } from './conditionalComponent/Chat';
                         </div>
                         <div className='content-Toolbar'>
                             <VideoToolbar/>
-                        </div>
-                        <div className='chat'>
-                            <Chat/>
                         </div>
                       </div>
                   </BrowserRouter>

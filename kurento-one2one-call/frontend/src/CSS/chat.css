@@ -1,6 +1,16 @@
 .chatDiv {
-    bottom: 0;
     right: 0;
     float: right;
     margin-right: 5vw;
+    z-index: 1;
+    /* border: 1px #0f0f0f solid; */
 }
+
+.chat-content{
+    /* visibility: hidden; */
+}
+
+.chatButton{
+   
+}
+
