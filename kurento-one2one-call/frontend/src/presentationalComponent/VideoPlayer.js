@@ -10,12 +10,13 @@ export class VideoPlayer extends React.Component {
     }
     render () {
         let urlList = this.props.urls;
+        let callState = this.props.callState;
         console.log('urlList ', urlList);
         if(urlList!==null){
             console.log('ok')
         let vc = urlList.map(function(link){
             console.log(link);
-            return( <VideoComponent url = {link} /> );
+            return( <VideoComponent url = {link}  callState = {callState} />);
         });
             return (
             <div className='player'>

@@ -20,14 +20,14 @@ export class Home extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            //username: null,
             videoInput: null,
             videoOutput: null,
-            //registerState: NOT_REGISTERED,
             callState: NO_CALL,
             message: [],
             localStream : null,
             remoteStream: [],
+            showChatBox : null,
+            
         }
         this.setLocalStreamURL = this.setLocalStreamURL.bind(this);
         this.Call = this.Call.bind(this);
@@ -367,6 +367,11 @@ export class Home extends React.Component {
         socket.emit('chat', msg );
     }
 
+    chatBox = ()=>  {
+        console.log('chatBox')
+        this.setState({showChatBox: !this.state.showChatBox});
+    }
+    
     recieveChat(msg){
         var prevState= this.state;
         this.setState(prevState => ({
@@ -376,8 +381,13 @@ export class Home extends React.Component {
     render(){
         return(
             <div>
-                <VideoPlayer urls = {[this.state.localStream, this.state.remoteStream[0]]} />
+                <VideoPlayer urls = {[this.state.localStream, this.state.remoteStream[0]]} callState = {this.state.callState} />
+                <div className="chat-content" >
+                                <Chat chatbox = {this.chatBox.bind(this)} show= {this.state.showChatBox}/>
+                </div>
             </div>
+
         );
     }
 }
+    

@@ -2,6 +2,7 @@
     float: left;
     display: inline-block;
     margin: 10vh auto 10vh 25px;
+    background-color: black;
 }
 
 .react-player {

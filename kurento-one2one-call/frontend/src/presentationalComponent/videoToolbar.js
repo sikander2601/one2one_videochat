@@ -16,18 +16,12 @@ export class VideoToolbar extends React.Component {
         };
     }
     
-    openChat = () => {
-        
-        var temp = this.state.show;
-        this.setState({show: !temp});
-    }
+
     render(){
         return (
             
             <Grid fluid>
-            <div className='chatDiv' style = {{visibility: this.state.show ? 'hidden' : 'visible' }} >
-                                <Chat />
-                            </div>
+            
             <div className='videoToolbar'>
                 <ButtonToolbar>
                     <ButtonGroup bsSize="big" className = 'buttonGroup'>
@@ -36,11 +30,7 @@ export class VideoToolbar extends React.Component {
                         <Button className = 'buttonElement'>Share Screen</Button>
                         <Button className = 'buttonElement'>Leave</Button>
                         
-                    </ButtonGroup>
-
-                    <div className= "chatButton">
-                            <Button className = 'buttonElement' style = {{visibility: this.state.show ? 'visible' : 'hidden' }} onClick = {this.openChat} >Chat</Button>
-                    </div>
+                    </ButtonGroup>     
                 </ButtonToolbar>
             </div>
             

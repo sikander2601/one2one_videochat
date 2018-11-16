@@ -10,7 +10,7 @@ export class Chat extends React.Component {
         this.state = {
             message: '',
             messages: [],
-            show : false
+            show : this.props.show
         };
     }
     
@@ -19,22 +19,33 @@ export class Chat extends React.Component {
         Home.sendChat(msg);
     }
 
+    openChat = () => {
+        
+        var temp = this.state.show;
+        this.setState({show: !temp});
+    }
+
     render(){
         return (
-            <div className="chatDiv">
-                <div class="chat-content">
-                    <div className="card-title">Global Chat</div>
+            <div className= "chat">
+            <div className="chatDiv" style={{ visibility : this.state.show ? 'visible' :'hidden' }}>
+                <div class="chat-content"  >
+                    <div className="card-title"> Chat</div>
                     <hr/>
                     <div className="messages">
                     </div>
                     <div className="footer">
                         <br/>
                         <input type="text" placeholder="Message" className="form-control" value={this.state.message} onChange={ev => this.setState({message: ev.target.value})}/>
-                        <br/>
                         <button className="btn btn-primary form-control" onClick= {this.sendChat} >Send</button>
                     </div>      
-                </div>
+                </div>   
             </div>
+            <div className= "chatButton">
+            <Button className = 'buttonElement' onClick = {this.chatBox} >Chat</Button>
+            </div>  
+        </div>
+           
         );
     }
 }
